@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shadow Translator — Documents, PDFs & Manga into Tamil</title>
+<meta name="description" content="Upload any document, PDF, or manga/manhwa page and get it back in Tamil — nothing changes except the language. By Shadow Studio.">
+<meta property="og:title" content="Shadow Translator — by Shadow Studio">
+<meta property="og:description" content="Upload a document, PDF, or manga page in any language. Only the language changes — everything else stays exactly as it was.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%230D0817'/><circle cx='50' cy='50' r='32' fill='none' stroke='%238B5CF6' stroke-width='7'/><circle cx='50' cy='50' r='11' fill='%23F472B6'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Noto+Sans+Tamil:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0d0817;
+    --glass-bg: rgba(255,255,255,0.055);
+    --glass-bg-strong: rgba(255,255,255,0.09);
+    --glass-border: rgba(196,181,253,0.18);
+    --purple: #8B5CF6;
+    --purple-deep: #6D28D9;
+    --purple-soft: #C4B5FD;
+    --pink: #F472B6;
+    --text: #F3F0FF;
+    --text-muted: #B3A6D9;
+    --radius: 18px;
+  }
+  *{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:
+      radial-gradient(circle at 15% 0%, rgba(139,92,246,0.30), transparent 45%),
+      radial-gradient(circle at 90% 15%, rgba(244,114,182,0.20), transparent 40%),
+      radial-gradient(circle at 50% 100%, rgba(109,40,217,0.25), transparent 50%),
+      var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+  }
+  .stage{ max-width: 1180px; margin: 0 auto; padding: 0 20px 60px; }
+  :focus-visible{ outline: 2px solid var(--purple-soft); outline-offset: 2px; }
+
+  /* ---------- GLASS PRIMITIVE ---------- */
+  .glass{
+    background: var(--glass-bg);
+    backdrop-filter: blur(22px) saturate(160%);
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    box-shadow: 0 8px 32px rgba(20,10,40,0.35), inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+
+  /* ---------- TOP BAR ---------- */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 18px 20px; max-width: 1180px; margin: 0 auto;
+  }
+  .brand{ display:flex; align-items:center; gap:11px; font-family:'Sora',sans-serif; font-weight:800; font-size:18px; color: var(--text); }
+  .brand-mark{
+    width: 32px; height:32px; border-radius: 10px; display:flex; align-items:center; justify-content:center;
+    background: linear-gradient(135deg, var(--purple), var(--pink));
+    box-shadow: 0 0 18px rgba(139,92,246,0.55);
+    color:#0d0817; font-weight:900; font-size:15px;
+  }
+  .topbar-note{ font-size: 12px; color: var(--text-muted); }
+  @media (max-width:560px){ .topbar-note{ display:none; } }
+
+  /* ---------- API KEY MODAL ---------- */
+  .modal-overlay{
+    display:none; position:fixed; inset:0; background: rgba(6,3,14,0.72);
+    z-index: 50; align-items:center; justify-content:center; padding: 20px;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.show{ display:flex; }
+  .modal{ max-width: 460px; width:100%; padding: 26px 28px; }
+  .modal h3{ font-family:'Sora',sans-serif; color: var(--purple-soft); margin: 0 0 12px; font-size: 18px; }
+  .modal p{ font-size: 13px; color: var(--text-muted); line-height: 1.7; margin: 0 0 14px; }
+  .modal input[type=password]{
+    width:100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--glass-border);
+    background: rgba(255,255,255,0.06); color: var(--text); font-size: 14px; font-family: 'Inter', monospace;
+  }
+  .modal input[type=password]:focus{ outline: 1px solid var(--purple-soft); }
+
+  /* ---------- HERO ---------- */
+  .hero{ text-align:center; padding: 44px 10px 22px; }
+  .eyebrow{
+    letter-spacing:.14em; color: var(--purple-soft); font-size: 12px;
+    text-transform: uppercase; margin-bottom: 10px; font-weight:600;
+  }
+  .hero h1{
+    font-family:'Sora', sans-serif; font-weight: 800;
+    font-size: clamp(30px, 5vw, 52px); line-height: 1.1; margin: 0 0 14px;
+    background: linear-gradient(100deg, var(--purple-soft), var(--purple) 45%, var(--pink));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero p{ color: var(--text-muted); max-width: 640px; margin: 0 auto; font-size: 16px; line-height: 1.7; }
+
+  /* ---------- TABS ---------- */
+  .tabs{ display:flex; justify-content:center; gap: 8px; margin: 28px auto 0; flex-wrap:wrap; }
+  .tab{
+    padding: 11px 22px; border-radius: 999px; cursor:pointer;
+    border: 1px solid var(--glass-border); background: var(--glass-bg);
+    color: var(--text-muted); font-weight: 600; font-size: 14px;
+    transition: all .2s ease;
+  }
+  .tab.active{ background: linear-gradient(120deg, var(--purple), var(--pink)); color:#0d0817; border-color: transparent; box-shadow: 0 0 20px rgba(139,92,246,0.4); }
+  .tab:hover:not(.active){ border-color: var(--purple-soft); color: var(--text); }
+
+  .view{ display:none; margin-top: 22px; }
+  .view.active{ display:block; }
+
+  /* ---------- LOADER (signature element: pulsing orb ring) ---------- */
+  .orbit{ display:flex; justify-content:center; align-items:center; gap: 10px; margin: 22px auto 4px; height: 30px; }
+  .orbit .dot{ width: 7px; height:7px; border-radius:50%; background: rgba(196,181,253,0.25); }
+  .orbit.active .dot{ background: var(--purple); box-shadow: 0 0 8px var(--purple); animation: orbitPulse 1.1s ease-in-out infinite; }
+  .orbit.active .dot:nth-child(odd){ animation-delay: .15s; }
+  .orbit.active .dot:nth-child(3n){ animation-delay: .3s; background: var(--pink); box-shadow: 0 0 8px var(--pink); }
+  @keyframes orbitPulse{ 0%,100%{ transform: scale(1); opacity:.55; } 50%{ transform: scale(1.9); opacity:1; } }
+  @media (prefers-reduced-motion: reduce){
+    .orbit.active .dot{ animation: none; opacity: 1; }
+    .spinner-ring{ animation: none !important; }
+  }
+
+  /* ---------- PANELS ---------- */
+  .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  @media (max-width: 860px){ .grid2{ grid-template-columns: 1fr; } }
+  .panel{ padding: 24px; display:flex; flex-direction: column; }
+  .panel h2{ font-family:'Sora', sans-serif; font-weight: 700; font-size: 19px; margin: 0 0 4px; color: var(--purple-soft); }
+  .panel .sub{ font-size: 12.5px; color: var(--text-muted); margin-bottom: 16px; }
+
+  .dropzone{
+    position: relative;
+    border: 1.5px dashed var(--glass-border); border-radius: 14px; padding: 30px; text-align:center;
+    transition: border-color .2s ease, background .2s ease;
+    background: rgba(255,255,255,0.02);
+  }
+  .dropzone:hover, .dropzone.drag{ border-color: var(--purple); background: rgba(139,92,246,0.08); }
+  .dropzone .dz-content{ position: relative; z-index: 1; pointer-events: none; }
+  .dropzone .big{ font-size: 15px; margin-bottom:4px; }
+  .dropzone .small{ font-size: 12px; color: var(--text-muted); }
+  /* Real file input laid transparently over the whole dropzone — this is what
+     makes tapping "browse" reliably open the native picker on mobile browsers,
+     instead of depending on a JS-triggered click() on a hidden input. */
+  .dropzone input[type=file]{
+    position:absolute; inset:0; width:100%; height:100%;
+    opacity:0; cursor:pointer; z-index:2; -webkit-appearance:none;
+  }
+
+  .filechip{
+    display:flex; align-items:center; justify-content:space-between; background: var(--glass-bg-strong);
+    border: 1px solid var(--glass-border); border-radius: 10px; padding: 10px 14px; margin-top: 14px; font-size: 13.5px;
+  }
+  .filechip button{ background:none; border:none; color: var(--pink); cursor:pointer; font-size: 13px; }
+
+  button.btn{
+    border: none; border-radius: 10px; padding: 12px 20px; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease; font-family:'Inter',sans-serif;
+  }
+  button.btn:disabled{ opacity: .4; cursor: not-allowed; }
+  button.btn:not(:disabled):hover{ transform: translateY(-1px); }
+  .btn-primary{ background: linear-gradient(120deg, var(--purple), var(--pink)); color: #0d0817; }
+  .btn-primary:not(:disabled):hover{ box-shadow: 0 6px 22px rgba(139,92,246,.45); }
+  .btn-secondary{ background: var(--glass-bg-strong); color: var(--text); border: 1px solid var(--glass-border); }
+  .btn-secondary:not(:disabled):hover{ border-color: var(--purple-soft); }
+  .btn-danger{ background: rgba(244,114,182,.16); color: #FBD4E8; border: 1px solid rgba(244,114,182,.4); }
+
+  .actions{ display:flex; gap:10px; margin-top: 16px; flex-wrap:wrap; }
+
+  .progress-wrap{ height: 5px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow:hidden; margin-top: 14px; display:none; }
+  .progress-wrap.show{ display:block; }
+  .progress-bar{ height:100%; width:0%; background: linear-gradient(90deg, var(--purple), var(--pink)); transition: width .3s ease; }
+
+  .status{ font-size: 12.5px; color: var(--text-muted); margin-top: 8px; min-height: 16px; line-height:1.6; }
+  .status.error{ color: var(--pink); }
+  .status.ok{ color: var(--purple-soft); }
+
+  /* ---------- READER VIEW (document mode) ---------- */
+  .reader-wrap{ display:none; margin-top: 22px; }
+  .reader-wrap.show{ display:block; }
+  .reader{ padding: 34px 38px; max-width: 820px; margin: 0 auto; }
+  .reader-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom: 18px; flex-wrap:wrap; gap:10px; }
+  .reader-header h3{ font-family:'Sora',sans-serif; color: var(--purple-soft); margin:0; font-size: 18px; }
+  .reader-body{
+    font-family: 'Noto Sans Tamil', sans-serif; font-size: 17px; line-height: 2; color: var(--text);
+    white-space: pre-wrap; min-height: 260px; width:100%;
+    background: transparent; border: none; outline: none; resize: vertical;
+  }
+  .reader-body:focus-visible{ outline: 1px solid var(--glass-border); border-radius: 6px; }
+  .toggle-original{ margin-top: 20px; border-top: 1px solid var(--glass-border); padding-top: 16px; }
+  .toggle-original summary{ cursor:pointer; color: var(--text-muted); font-size: 13px; }
+  .toggle-original .orig-text{ margin-top: 12px; font-size: 13.5px; color: var(--text-muted); white-space: pre-wrap; max-height: 260px; overflow-y:auto; }
+
+  /* ---------- MANGA GRID ---------- */
+  .manga-upload{ padding: 24px; }
+  .manga-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px; margin-top: 22px; }
+  .group-header{
+    grid-column: 1 / -1; padding: 16px 20px; display:flex; align-items:center; justify-content:space-between;
+    flex-wrap:wrap; gap:12px;
+  }
+  .group-header .group-title{ font-family:'Sora',sans-serif; font-weight:700; color: var(--purple-soft); font-size: 15px; }
+  .group-header .group-sub{ font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .group-header .actions{ margin-top:0; }
+  .manga-empty{
+    text-align:center; padding: 40px 20px; color: var(--text-muted); font-size: 13.5px;
+    border: 1px dashed var(--glass-border); border-radius: var(--radius); margin-top: 22px;
+  }
+  .manga-card{ overflow:hidden; display:flex; flex-direction:column; }
+  .manga-card .thumb-wrap{ position:relative; background: rgba(0,0,0,0.2); min-height: 180px; display:flex; align-items:center; justify-content:center; }
+  .manga-card img, .manga-card canvas{ width:100%; display:block; }
+  .manga-card .meta{ padding: 12px 14px; }
+  .manga-card .fname{ font-size: 12.5px; color: var(--text-muted); margin-bottom:8px; word-break: break-all; }
+  .manga-card .card-status{ font-size: 12px; color: var(--purple-soft); margin-bottom: 8px; }
+  .manga-card .card-status.error{ color: var(--pink); }
+  .manga-card .card-actions{ display:flex; gap:8px; }
+  .manga-card button.btn{ padding: 8px 12px; font-size: 12.5px; flex:1; }
+  .spinner-overlay{
+    position:absolute; inset:0; display:flex; flex-direction:column; gap:10px; align-items:center; justify-content:center;
+    background: rgba(13,8,23,0.75); backdrop-filter: blur(3px); font-size: 12px; color: var(--purple-soft); text-align:center; padding: 10px;
+  }
+  .spinner-ring{
+    width: 22px; height:22px; border-radius:50%;
+    border: 2.5px solid rgba(196,181,253,0.25); border-top-color: var(--purple);
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+
+  footer{ text-align:center; margin-top: 46px; color: var(--text-muted); font-size: 12px; line-height:1.9; }
+  footer .credit{ color: var(--purple-soft); font-weight:600; }
+
+  #printArea{ display:none; }
+  @media print{
+    body *{ visibility:hidden; }
+    #printArea, #printArea *{ visibility:visible; }
+    #printArea{
+      display:block; position:absolute; top:0; left:0; width:100%; color:#000; background:#fff; padding: 30px;
+      font-family:'Noto Sans Tamil', sans-serif; font-size: 14pt; line-height: 1.9; white-space: pre-wrap;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand"><span class="brand-mark">S</span> Shadow Translator</div>
+  <div style="display:flex; align-items:center; gap:14px;">
+    <div class="topbar-note">Runs in your browser · by Shadow Studio</div>
+    <button type="button" class="btn btn-secondary" id="apiKeyBtn" style="padding:8px 14px; font-size:12.5px;">API Key</button>
+  </div>
+</header>
+
+<div class="modal-overlay" id="apiKeyModalOverlay">
+  <div class="modal glass" id="apiKeyModal">
+    <h3>Anthropic API key</h3>
+    <p id="apiKeyProxyNotice" style="display:none; color: var(--purple-soft); font-weight:600;">
+      This site is running through a shared proxy — visitors don't need a key at all.
+      This is only for advanced use (e.g. to use your own key/quota instead of the shared one).
+    </p>
+    <p>
+      Inside Claude.ai, translation works automatically — no key needed.
+      If you're running <strong>this file as your own standalone website</strong>
+      (hosted elsewhere, or opened directly outside Claude) with no proxy set up,
+      the browser can't reach the translation service without a key. Paste yours
+      below — it's stored only in this browser, never sent anywhere except
+      directly to Anthropic (or to the proxy, if one is configured).
+    </p>
+    <input type="password" id="apiKeyInput" placeholder="sk-ant-...">
+    <div class="actions">
+      <button class="btn btn-primary" type="button" id="apiKeySaveBtn">Save</button>
+      <button class="btn btn-secondary" type="button" id="apiKeyClearBtn">Clear</button>
+      <button class="btn btn-secondary" type="button" id="apiKeyCancelBtn">Close</button>
+    </div>
+    <div class="status" id="apiKeyStatus"></div>
+    <p style="margin-top:14px; font-size:12px;">
+      Get a key at <span style="color:var(--purple-soft);">console.anthropic.com</span> → API Keys.
+    </p>
+  </div>
+</div>
+
+<div class="stage">
+
+  <div class="hero">
+    <div class="eyebrow">Any Language → Tamil</div>
+    <h1>Read anything in Tamil</h1>
+    <p>Upload a document, PDF, or a manga/manhwa page in any language. Only the language changes — nothing else is added, removed, or rearranged. Then download it.</p>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="doc">Document Translator</div>
+    <div class="tab" data-tab="manga">Manga / Image Translator</div>
+  </div>
+
+  <!-- =================== DOCUMENT VIEW =================== -->
+  <div class="view active" id="view-doc">
+    <div class="grid2">
+      <div class="panel glass">
+        <h2>Upload a file</h2>
+        <div class="sub">.txt, .md, .pdf, .docx, .csv, .html, .rtf, .json, .srt — up to 20&nbsp;MB. Translation starts the moment it's read.</div>
+        <div class="dropzone" id="dropzone">
+          <input type="file" id="fileInput" accept=".txt,.md,.pdf,.docx,.csv,.html,.htm,.rtf,.json,.srt,.vtt" aria-label="Upload a document">
+          <div class="dz-content">
+            <div class="big">Drop your file here</div>
+            <div class="small">or tap to browse</div>
+          </div>
+        </div>
+        <div id="fileChipHolder"></div>
+        <div class="actions">
+          <button class="btn btn-primary" id="translateBtn" disabled>Translating starts automatically</button>
+          <button class="btn btn-secondary" id="clearBtn" disabled>Clear</button>
+        </div>
+        <div class="progress-wrap" id="progressWrap"><div class="progress-bar" id="progressBar"></div></div>
+        <div class="status" id="statusText" role="status" aria-live="polite"></div>
+      </div>
+      <div class="panel glass">
+        <h2>How it works</h2>
+        <div class="sub" style="line-height:1.8; font-size:13px;">
+          1. Your file is read entirely inside the browser — nothing is uploaded anywhere.<br><br>
+          2. The moment text is extracted, translation starts automatically — no extra click.<br><br>
+          3. If a PDF turns out to have no real text layer (common for scanned manga/manhwa chapters), it's automatically converted into pages and sent to the Manga translator instead.<br><br>
+          4. Long files are split into sections and translated in parallel instead of one-by-one, so it finishes fast.<br><br>
+          5. Only the language changes: structure, paragraph breaks, and order are kept exactly as in the original.<br><br>
+          6. The result opens as a Tamil reading view — editable, downloadable as .txt, or printable to PDF.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== MANGA VIEW =================== -->
+  <div class="view" id="view-manga">
+    <div class="manga-upload glass">
+      <h2 style="font-family:'Sora',sans-serif; color:var(--purple-soft); margin:0 0 4px; font-weight:700; font-size:19px;">Upload manga / manhwa pages</h2>
+      <div class="sub" style="margin-bottom:16px;">JPG, PNG, WEBP, or PDF, up to 10&nbsp;MB each (PDFs are split into one page per image automatically). Drop in several pages at once — each one is read, translated, and retyped directly onto the artwork in Tamil, automatically. The art and layout stay untouched.</div>
+      <div class="dropzone" id="mangaDropzone">
+        <input type="file" id="mangaInput" accept=".jpg,.jpeg,.png,.webp,.pdf" multiple aria-label="Upload manga pages">
+        <div class="dz-content">
+          <div class="big">Drop image pages here</div>
+          <div class="small">JPG, PNG, WEBP, or PDF — multiple files allowed</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" id="translateAllBtn" disabled>Retry any failed pages</button>
+        <button class="btn btn-secondary" id="downloadAllBtn" disabled>Download all (.zip)</button>
+        <button class="btn btn-secondary" id="clearMangaBtn" disabled>Clear</button>
+      </div>
+      <div class="status" id="mangaStatusText" role="status" aria-live="polite"></div>
+    </div>
+    <div class="manga-grid" id="mangaGrid"></div>
+    <div class="manga-empty glass" id="mangaEmpty">No pages yet — upload one to see it translated here.</div>
+  </div>
+
+  <!-- =================== READER (document result) =================== -->
+  <div class="reader-wrap" id="readerWrap">
+    <div class="orbit" id="orbit">
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    </div>
+    <div class="reader glass">
+      <div class="reader-header">
+        <h3 id="readerTitle">Tamil Reading View</h3>
+        <div class="actions" style="margin-top:0;">
+          <button class="btn btn-secondary" id="downloadTxtBtn">Download .txt</button>
+          <button class="btn btn-danger" id="printBtn">Save as PDF</button>
+        </div>
+      </div>
+      <textarea class="reader-body textbox tamil" id="translatedText" spellcheck="false" placeholder="Translation will appear here..."></textarea>
+      <details class="toggle-original">
+        <summary>Show original extracted text</summary>
+        <div class="orig-text" id="originalTextDisplay"></div>
+      </details>
+    </div>
+  </div>
+
+  <footer>
+    Files are parsed in your own browser. Only extracted text or page images are sent off for translation.<br>
+    Large files are processed in sections — if a request ever fails, Shadow Translator retries automatically before giving up.<br>
+    <span class="credit">Shadow Translator</span> · a Shadow Studio product
+  </footer>
+</div>
+
+<div id="printArea"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<script>
+if (window.pdfjsLib) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+}
+
+/* ---------------- TABS ---------------- */
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('view-' + tab.dataset.tab).classList.add('active');
+  });
+});
+
+/* ================================================================
+   API KEY (only needed when this file runs outside Claude.ai as its
+   own standalone site — inside Claude.ai the built-in proxy handles auth)
+================================================================ */
+/* ================================================================
+   API ENDPOINT
+   By default this calls Anthropic directly (works automatically
+   inside Claude.ai, or with a visitor-supplied key outside it).
+   If you deploy the included Cloudflare Worker proxy (see
+   PROXY_SETUP.md), replace the URL below with your worker's URL —
+   then NO visitor needs their own API key; your key stays secret
+   on the server side.
+================================================================ */
+const API_BASE_URL = "https://api.anthropic.com/v1/messages";
+const USING_PROXY = API_BASE_URL !== "https://api.anthropic.com/v1/messages";
+
+let userApiKey = '';
+try { userApiKey = localStorage.getItem('shadow_translator_api_key') || ''; } catch (e){ /* storage unavailable, fall back to in-memory only */ }
+
+const apiKeyBtn = document.getElementById('apiKeyBtn');
+const apiKeyModalOverlay = document.getElementById('apiKeyModalOverlay');
+const apiKeyInput = document.getElementById('apiKeyInput');
+const apiKeySaveBtn = document.getElementById('apiKeySaveBtn');
+const apiKeyClearBtn = document.getElementById('apiKeyClearBtn');
+const apiKeyCancelBtn = document.getElementById('apiKeyCancelBtn');
+const apiKeyStatus = document.getElementById('apiKeyStatus');
+
+function openApiKeyModal(){
+  apiKeyInput.value = userApiKey;
+  apiKeyStatus.textContent = '';
+  apiKeyModalOverlay.classList.add('show');
+}
+function closeApiKeyModal(){ apiKeyModalOverlay.classList.remove('show'); }
+
+if (USING_PROXY){
+  apiKeyBtn.textContent = 'Advanced';
+  const proxyNotice = document.getElementById('apiKeyProxyNotice');
+  if (proxyNotice) proxyNotice.style.display = 'block';
+}
+
+apiKeyBtn.addEventListener('click', openApiKeyModal);
+apiKeyCancelBtn.addEventListener('click', closeApiKeyModal);
+apiKeyModalOverlay.addEventListener('click', e => { if (e.target === apiKeyModalOverlay) closeApiKeyModal(); });
+
+apiKeySaveBtn.addEventListener('click', () => {
+  userApiKey = apiKeyInput.value.trim();
+  try { localStorage.setItem('shadow_translator_api_key', userApiKey); } catch (e){ /* ignore */ }
+  apiKeyStatus.textContent = userApiKey ? 'Saved — translation will use this key from now on.' : 'Key cleared.';
+  apiKeyStatus.className = 'status ok';
+  setTimeout(closeApiKeyModal, 900);
+});
+
+apiKeyClearBtn.addEventListener('click', () => {
+  userApiKey = '';
+  apiKeyInput.value = '';
+  try { localStorage.removeItem('shadow_translator_api_key'); } catch (e){ /* ignore */ }
+  apiKeyStatus.textContent = 'Key cleared.';
+  apiKeyStatus.className = 'status ok';
+});
+
+function claudeApiHeaders(){
+  const headers = { "Content-Type": "application/json" };
+  if (userApiKey){
+    headers["x-api-key"] = userApiKey;
+    headers["anthropic-version"] = "2023-06-01";
+    headers["anthropic-dangerous-direct-browser-access"] = "true";
+  }
+  return headers;
+}
+
+/* ================================================================
+   SHARED: robust fetch with retry + timeout, and Claude API helpers
+================================================================ */
+async function fetchWithRetry(url, options, cfg){
+  const retries = (cfg && cfg.retries) || 4;
+  const baseDelayMs = (cfg && cfg.baseDelayMs) || 900;
+  const timeoutMs = (cfg && cfg.timeoutMs) || 90000;
+
+  for (let attempt = 0; attempt <= retries; attempt++){
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(url, { ...options, signal: controller.signal });
+      clearTimeout(timer);
+      if (res.ok) return res;
+
+      const retryableStatus = [429, 500, 502, 503, 529].includes(res.status);
+      if (retryableStatus && attempt < retries){
+        const delay = baseDelayMs * Math.pow(2, attempt) + Math.random() * 300;
+        await new Promise(r => setTimeout(r, delay));
+        continue;
+      }
+      let message = 'The translation service returned an error (' + res.status + ')';
+      try {
+        const errJson = await res.json();
+        if (errJson && errJson.error && errJson.error.message) message = errJson.error.message;
+      } catch (e) { /* ignore, use default message */ }
+      if (res.status === 401 || res.status === 403){
+        message = 'Authentication failed. If this site is running outside Claude.ai, add a valid Anthropic API key via the "API Key" button at the top.';
+      }
+      throw new Error(message);
+    } catch (err){
+      clearTimeout(timer);
+      const isAbort = err.name === 'AbortError';
+      const isNetworkFailure = err instanceof TypeError; // "Failed to fetch" / CORS / offline
+      if (attempt < retries){
+        const delay = baseDelayMs * Math.pow(2, attempt) + Math.random() * 300;
+        await new Promise(r => setTimeout(r, delay));
+        continue;
+      }
+      if (isAbort) throw new Error('The request timed out. Please try again.');
+      if (isNetworkFailure){
+        throw new Error(
+          userApiKey
+            ? 'Could not reach the translation service. Check your internet connection and API key, then try again.'
+            : 'Could not reach the translation service. If this site is running outside Claude.ai (e.g. opened as a local file or hosted on your own domain), add your Anthropic API key using the "API Key" button at the top — translation needs it to work outside Claude.'
+        );
+      }
+      throw err;
+    }
+  }
+}
+
+/* Translation-fidelity contract used across both text and manga paths:
+   translate the language ONLY — never summarize, expand, reorder, add, or
+   drop content. Structure must come back exactly as it went in. */
+const TEXT_SYSTEM_PROMPT =
+  "You are a professional translator. Translate the given text fully and accurately into Tamil (தமிழ்). " +
+  "Rules you must follow exactly: " +
+  "(1) Translate only the language — do not summarize, shorten, expand, paraphrase loosely, reorder, add commentary, or omit any part of the content. " +
+  "(2) Preserve the original structure exactly: same paragraph breaks, same line breaks, same bullet/numbered list markers, same order. " +
+  "(3) If a word or name has no natural Tamil equivalent (e.g. proper nouns, brand names, technical terms), transliterate it into Tamil script rather than skipping it. " +
+  "(4) Output ONLY the Tamil translation — no preamble, no notes, no explanations, no quotation marks around it.";
+
+const VISION_SYSTEM_PROMPT =
+  "You read comic/manga pages and prepare them for retypesetting into Tamil. " +
+  "Rules you must follow exactly: " +
+  "(1) Detect every text-bearing element on the page — every speech bubble, caption box, and sound effect — and translate each into Tamil. Do not skip any, and do not invent text that isn't there. " +
+  "(2) One bubble or caption box = one region, no matter how much text it contains. If a single speech bubble or caption contains multiple sentences or lines, keep it as ONE region with ONE bounding box covering the whole block of text, and put its FULL translated text in \"tamil_text\" — never split one bubble's text across several smaller regions, and never truncate or cut off part of a bubble's text. Only create separate regions for genuinely separate, visually distinct bubbles/captions/sound effects. " +
+  "(3) Translate the language only: keep the same meaning, tone, and reading order as the original. Do not summarize, shorten, or merge separate bubbles into one. " +
+  "(4) Respond with ONLY a JSON array, no other text, no markdown fences. Each array item must have exactly these fields: \"x\", \"y\", \"width\", \"height\" (numbers, percentages 0-100 of the image, a bounding box tight around that whole text region), \"original_text\" (the full text as it appears), \"tamil_text\" (the full, complete Tamil translation of it — never partial). " +
+  "(5) List regions top-to-bottom, left-to-right in natural reading order. If there is no text on the page, return an empty array [].";
+
+async function callClaudeText(chunk){
+  const response = await fetchWithRetry(API_BASE_URL, {
+    method: "POST",
+    headers: claudeApiHeaders(),
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 4096,
+      system: TEXT_SYSTEM_PROMPT,
+      messages: [{ role: "user", content: chunk }]
+    })
+  });
+  const data = await response.json();
+  return (data.content || []).map(b => b.text || '').join('\n').trim();
+}
+
+function stripJsonFences(text){
+  return text.replace(/```json/gi, '').replace(/```/g, '').trim();
+}
+
+function parseRegionsJson(raw){
+  const cleaned = stripJsonFences(raw);
+  try {
+    return JSON.parse(cleaned);
+  } catch (e){
+    const match = cleaned.match(/\[[\s\S]*\]/);
+    if (match) return JSON.parse(match[0]);
+    throw new Error('malformed JSON');
+  }
+}
+
+async function callClaudeVisionTranslate(base64Data, mediaType){
+  const maxAttempts = 3;
+  let lastErr;
+  for (let attempt = 0; attempt < maxAttempts; attempt++){
+    const response = await fetchWithRetry(API_BASE_URL, {
+      method: "POST",
+      headers: claudeApiHeaders(),
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 8192,
+        system: VISION_SYSTEM_PROMPT,
+        messages: [{
+          role: "user",
+          content: [
+            { type: "image", source: { type: "base64", media_type: mediaType, data: base64Data } },
+            { type: "text", text: "Detect every text region on this page and translate each into Tamil. Remember: one bubble = one region with its full text, never split a single bubble's text into pieces. Return only the JSON array." }
+          ]
+        }]
+      })
+    }, { timeoutMs: 120000 });
+    const data = await response.json();
+    const raw = (data.content || []).map(b => b.text || '').join('\n');
+
+    let parsed;
+    try {
+      parsed = parseRegionsJson(raw);
+    } catch (e){
+      lastErr = e;
+      continue; // response got cut off or malformed — just try the page again
+    }
+    if (!Array.isArray(parsed)){
+      lastErr = new Error('Unexpected response format from the translator.');
+      continue;
+    }
+    return parsed.filter(r =>
+      r && typeof r.x === 'number' && typeof r.y === 'number' &&
+      typeof r.width === 'number' && typeof r.height === 'number' &&
+      typeof r.tamil_text === 'string' && r.tamil_text.trim().length > 0
+    ).map(r => {
+      const clampedX = Math.max(0, Math.min(100, r.x));
+      const clampedY = Math.max(0, Math.min(100, r.y));
+      return {
+        x: clampedX,
+        y: clampedY,
+        width: Math.max(1, Math.min(100 - clampedX, r.width)),
+        height: Math.max(1, Math.min(100 - clampedY, r.height)),
+        original_text: r.original_text || '',
+        tamil_text: r.tamil_text
+      };
+    });
+  }
+  throw lastErr || new Error('Could not read the translated regions back from the response after several attempts.');
+}
+
+function splitIntoChunks(text, maxLen){
+  const paras = text.split(/\n\s*\n/);
+  const chunks = [];
+  let current = '';
+  for (const p of paras){
+    if ((current + '\n\n' + p).length > maxLen && current.length > 0){
+      chunks.push(current);
+      current = p;
+    } else {
+      current = current ? current + '\n\n' + p : p;
+    }
+  }
+  if (current) chunks.push(current);
+  const finalChunks = [];
+  for (const c of chunks){
+    if (c.length <= maxLen) finalChunks.push(c);
+    else for (let i = 0; i < c.length; i += maxLen) finalChunks.push(c.slice(i, i + maxLen));
+  }
+  return finalChunks;
+}
+
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+const MAX_PDF_PAGES_AS_IMAGES = 60;
+
+/* Renders every page of a PDF to a PNG image, for cases where the PDF is a
+   scan/comic with no real text layer (manga/manhwa chapters shared as PDF). */
+async function renderPdfPagesAsImages(file, onProgress){
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  const pageCount = Math.min(pdf.numPages, MAX_PDF_PAGES_AS_IMAGES);
+  const baseName = file.name.replace(/\.[^.]+$/, '');
+  const images = [];
+
+  for (let i = 1; i <= pageCount; i++){
+    const page = await pdf.getPage(i);
+    const unscaled = page.getViewport({ scale: 1 });
+    const targetWidth = isMobileDevice ? 1000 : 1400;
+    const scale = Math.min(2.5, Math.max(1, targetWidth / unscaled.width));
+    const viewport = page.getViewport({ scale });
+
+    const canvas = document.createElement('canvas');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    const ctx = canvas.getContext('2d');
+    await page.render({ canvasContext: ctx, viewport }).promise;
+
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+    const pageNum = String(i).padStart(3, '0');
+    images.push(new File([blob], `${baseName}_page${pageNum}.png`, { type: 'image/png' }));
+    if (onProgress) onProgress(i, pageCount);
+  }
+  return { images, truncated: pdf.numPages > MAX_PDF_PAGES_AS_IMAGES, totalPages: pdf.numPages };
+}
+
+/* Works the same on Windows, Android, or anywhere else — this is a plain
+   web page (HTML/CSS/JS), not a native app, so any modern browser runs it
+   identically. The one thing that genuinely differs is device power: phones
+   have less memory than a Windows PC, so we quietly scale concurrency and
+   image size down on phones to avoid crashes/slowdowns, and keep it higher
+   on desktop where there's more headroom. */
+const isMobileDevice = /Android|iPhone|iPad|iPod|Mobile|Windows Phone/i.test(navigator.userAgent);
+
+function switchToTab(tabName){
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tabName));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + tabName));
+}
+
+async function handOffPdfToManga(file){
+  switchToTab('manga');
+  document.getElementById('view-manga').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  await addMangaFiles([file]);
+}
+
+/* Runs async workers over a list of items with a concurrency cap, calling
+   onEach(index, result, completedCount, total) as soon as each item finishes. */
+async function runWithConcurrency(items, worker, limit, onEach){
+  const results = new Array(items.length);
+  let nextIndex = 0;
+  let completed = 0;
+  const laneCount = Math.max(1, Math.min(limit, items.length));
+  const lanes = new Array(laneCount).fill(null).map(async () => {
+    while (nextIndex < items.length){
+      const myIndex = nextIndex++;
+      const result = await worker(items[myIndex], myIndex);
+      results[myIndex] = result;
+      completed++;
+      if (onEach) onEach(myIndex, result, completed, items.length);
+    }
+  });
+  await Promise.all(lanes);
+  return results;
+}
+
+/* ================================================================
+   DOCUMENT TRANSLATOR
+================================================================ */
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+const fileChipHolder = document.getElementById('fileChipHolder');
+const translateBtn = document.getElementById('translateBtn');
+const clearBtn = document.getElementById('clearBtn');
+const progressWrap = document.getElementById('progressWrap');
+const progressBar = document.getElementById('progressBar');
+const statusText = document.getElementById('statusText');
+const orbit = document.getElementById('orbit');
+const readerWrap = document.getElementById('readerWrap');
+const readerTitle = document.getElementById('readerTitle');
+const translatedText = document.getElementById('translatedText');
+const originalTextDisplay = document.getElementById('originalTextDisplay');
+const downloadTxtBtn = document.getElementById('downloadTxtBtn');
+const printBtn = document.getElementById('printBtn');
+const printArea = document.getElementById('printArea');
+
+const MAX_DOC_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
+const CHUNK_SIZE = 6000;
+const TRANSLATE_CONCURRENCY = isMobileDevice ? 3 : 5;
+
+let currentFileName = '';
+let extractedText = '';
+let docGeneration = 0; // invalidates stale async work after a new upload or clear
+
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault(); dropzone.classList.remove('drag');
+  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', () => { if (fileInput.files.length) handleFile(fileInput.files[0]); });
+
+function setStatus(msg, type){
+  statusText.textContent = msg || '';
+  statusText.className = 'status' + (type ? ' ' + type : '');
+}
+
+async function handleFile(file){
+  const myGen = ++docGeneration;
+
+  if (file.size > MAX_DOC_FILE_SIZE){
+    setStatus(`That file is ${(file.size / (1024*1024)).toFixed(1)} MB — please keep uploads under 20 MB.`, 'error');
+    return;
+  }
+
+  currentFileName = file.name;
+  setStatus('Reading file...', '');
+  extractedText = '';
+  translateBtn.disabled = true;
+  readerWrap.classList.remove('show');
+
+  fileChipHolder.innerHTML = '';
+  const chip = document.createElement('div');
+  chip.className = 'filechip';
+  chip.innerHTML = `<span>${escapeHtml(file.name)}</span><button type="button" id="removeFile">Remove</button>`;
+  fileChipHolder.appendChild(chip);
+  document.getElementById('removeFile').addEventListener('click', resetAll);
+
+  try {
+    const text = await extractText(file);
+    if (myGen !== docGeneration) return;
+
+    extractedText = text;
+    if (!extractedText || !extractedText.trim()){
+      const ext = file.name.split('.').pop().toLowerCase();
+      if (ext === 'pdf'){
+        // No embedded text layer — this is almost always a scanned/image PDF,
+        // which is exactly how manga/manhwa chapters are usually shared.
+        // Hand it straight to the manga pipeline instead of just failing.
+        setStatus("This PDF has no embedded text — it's a scanned/image file (common for manga/manhwa chapters). Sending it to the Manga translator...", 'ok');
+        await handOffPdfToManga(file);
+      } else {
+        setStatus('No extractable text was found in this file.', 'error');
+      }
+      return;
+    }
+    translateBtn.disabled = false;
+    clearBtn.disabled = false;
+    setStatus(`Extracted ${extractedText.length.toLocaleString()} characters. Starting translation...`, 'ok');
+    startTranslation(myGen);
+  } catch (err){
+    if (myGen !== docGeneration) return;
+    console.error(err);
+    setStatus('Error reading file: ' + err.message, 'error');
+  }
+}
+
+async function extractText(file){
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (['txt','md','csv','rtf','json','html','htm','srt','vtt'].includes(ext)){
+    return await file.text();
+  } else if (ext === 'pdf'){
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    let text = '';
+    for (let i = 1; i <= pdf.numPages; i++){
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map(it => it.str).join(' ') + '\n\n';
+    }
+    return text;
+  } else if (ext === 'docx'){
+    const buf = await file.arrayBuffer();
+    const result = await mammoth.extractRawText({ arrayBuffer: buf });
+    return result.value;
+  } else {
+    try {
+      const text = await file.text();
+      if (text && /[\x20-\x7E]/.test(text)) return text;
+      throw new Error('not text');
+    } catch (e){
+      throw new Error('Unsupported file type. Try .txt, .md, .pdf, .docx, .csv, .html, .rtf, .json, .srt.');
+    }
+  }
+}
+
+async function startTranslation(myGen){
+  if (!extractedText.trim()) return;
+  translateBtn.disabled = true;
+  translateBtn.textContent = 'Translating...';
+  clearBtn.disabled = true;
+  readerWrap.classList.add('show');
+  readerTitle.textContent = currentFileName ? `Tamil Reading View — ${currentFileName}` : 'Tamil Reading View';
+  translatedText.value = '';
+  originalTextDisplay.textContent = extractedText;
+  orbit.classList.add('active');
+  progressWrap.classList.add('show');
+  progressBar.style.width = '0%';
+  setStatus('Translating...', '');
+  readerWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  const chunks = splitIntoChunks(extractedText, CHUNK_SIZE);
+  const liveResults = new Array(chunks.length).fill('');
+
+  try {
+    await runWithConcurrency(
+      chunks,
+      (chunk) => callClaudeText(chunk),
+      TRANSLATE_CONCURRENCY,
+      (index, result, completed, total) => {
+        if (myGen !== docGeneration) return;
+        liveResults[index] = result;
+        translatedText.value = liveResults.join('\n\n').trim();
+        progressBar.style.width = Math.round((completed / total) * 100) + '%';
+        setStatus(`Translating... (${completed}/${total} sections done)`, '');
+      }
+    );
+    if (myGen !== docGeneration) return;
+    setStatus('Translation complete ✓', 'ok');
+  } catch (err){
+    if (myGen !== docGeneration) return;
+    console.error(err);
+    setStatus('Translation error: ' + err.message + ' — try "Re-translate" to pick up where it left off.', 'error');
+  } finally {
+    if (myGen === docGeneration){
+      orbit.classList.remove('active');
+      translateBtn.disabled = false;
+      translateBtn.textContent = 'Re-translate';
+      clearBtn.disabled = false;
+    }
+  }
+}
+
+translateBtn.addEventListener('click', () => startTranslation(docGeneration));
+
+downloadTxtBtn.addEventListener('click', () => {
+  const content = translatedText.value || '';
+  if (!content.trim()) return;
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const base = currentFileName ? currentFileName.replace(/\.[^.]+$/, '') : 'translation';
+  a.href = url; a.download = base + '_tamil.txt';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+});
+
+printBtn.addEventListener('click', () => {
+  const content = translatedText.value || '';
+  if (!content.trim()) return;
+  printArea.textContent = content;
+  window.print();
+});
+
+clearBtn.addEventListener('click', resetAll);
+
+function resetAll(){
+  docGeneration++;
+  fileInput.value = '';
+  currentFileName = '';
+  extractedText = '';
+  fileChipHolder.innerHTML = '';
+  translatedText.value = '';
+  translateBtn.disabled = true;
+  translateBtn.textContent = 'Translating starts automatically';
+  clearBtn.disabled = true;
+  progressWrap.classList.remove('show');
+  progressBar.style.width = '0%';
+  setStatus('');
+  readerWrap.classList.remove('show');
+}
+
+/* ================================================================
+   MANGA / IMAGE TRANSLATOR
+================================================================ */
+const mangaDropzone = document.getElementById('mangaDropzone');
+const mangaInput = document.getElementById('mangaInput');
+const mangaGrid = document.getElementById('mangaGrid');
+const mangaEmpty = document.getElementById('mangaEmpty');
+const translateAllBtn = document.getElementById('translateAllBtn');
+const downloadAllBtn = document.getElementById('downloadAllBtn');
+const clearMangaBtn = document.getElementById('clearMangaBtn');
+const mangaStatusText = document.getElementById('mangaStatusText');
+
+const MAX_IMAGE_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const MANGA_CONCURRENCY = isMobileDevice ? 2 : 4;
+
+let mangaPages = [];
+let pageCounter = 0;
+
+mangaDropzone.addEventListener('dragover', e => { e.preventDefault(); mangaDropzone.classList.add('drag'); });
+mangaDropzone.addEventListener('dragleave', () => mangaDropzone.classList.remove('drag'));
+mangaDropzone.addEventListener('drop', e => {
+  e.preventDefault(); mangaDropzone.classList.remove('drag');
+  if (e.dataTransfer.files.length) addMangaFiles(Array.from(e.dataTransfer.files));
+});
+mangaInput.addEventListener('change', () => {
+  if (mangaInput.files.length) addMangaFiles(Array.from(mangaInput.files));
+});
+
+function setMangaStatus(msg, type){
+  mangaStatusText.textContent = msg || '';
+  mangaStatusText.className = 'status' + (type ? ' ' + type : '');
+}
+
+function refreshMangaEmptyState(){
+  mangaEmpty.style.display = mangaPages.length === 0 ? 'block' : 'none';
+}
+
+function waitForImageLoad(imgEl){
+  return new Promise((resolve, reject) => {
+    if (imgEl.complete && imgEl.naturalWidth > 0) return resolve();
+    imgEl.addEventListener('load', () => resolve(), { once: true });
+    imgEl.addEventListener('error', () => reject(new Error('Could not load this image')), { once: true });
+  });
+}
+
+async function addMangaFiles(rawFiles){
+  const pdfFiles = rawFiles.filter(f => f.name.toLowerCase().endsWith('.pdf') || f.type === 'application/pdf');
+  const nonPdfFiles = rawFiles.filter(f => !(f.name.toLowerCase().endsWith('.pdf') || f.type === 'application/pdf'));
+
+  let expandedFromPdfs = [];
+  if (pdfFiles.length){
+    setMangaStatus(`Converting ${pdfFiles.length} PDF(s) to page images...`, '');
+    for (const pdfFile of pdfFiles){
+      try {
+        const { images, truncated, totalPages } = await renderPdfPagesAsImages(pdfFile, (done, total) => {
+          setMangaStatus(`Converting "${pdfFile.name}"... (${done}/${total} pages)`, '');
+        });
+        expandedFromPdfs.push(...images);
+        if (truncated){
+          setMangaStatus(`"${pdfFile.name}" has ${totalPages} pages — only the first ${MAX_PDF_PAGES_AS_IMAGES} were converted to keep things fast.`, 'ok');
+        }
+      } catch (err){
+        console.error(err);
+        setMangaStatus(`Could not convert "${pdfFile.name}": ${err.message}`, 'error');
+      }
+    }
+  }
+
+  let groupLabel;
+  if (pdfFiles.length === 1 && nonPdfFiles.length === 0) groupLabel = pdfFiles[0].name.replace(/\.[^.]+$/, '');
+  else if (pdfFiles.length > 1 && nonPdfFiles.length === 0) groupLabel = `${pdfFiles.length} PDFs`;
+  else if (nonPdfFiles.length === 1 && pdfFiles.length === 0) groupLabel = nonPdfFiles[0].name.replace(/\.[^.]+$/, '');
+  else groupLabel = 'Uploaded batch';
+
+  addImageFilesToGrid([...nonPdfFiles, ...expandedFromPdfs], groupLabel);
+}
+
+let groupCounter = 0;
+
+function addImageFilesToGrid(files, groupLabel){
+  const accepted = [];
+  let rejectedTooBig = 0;
+  let rejectedNotImage = 0;
+
+  for (const file of files){
+    if (!file.type.startsWith('image/')){ rejectedNotImage++; continue; }
+    if (file.size > MAX_IMAGE_FILE_SIZE){ rejectedTooBig++; continue; }
+    accepted.push(file);
+  }
+
+  refreshMangaEmptyState();
+
+  let msg = accepted.length ? `${accepted.length} page(s) added — translating "${groupLabel}" automatically...` : '';
+  if (rejectedTooBig) msg += ` ${rejectedTooBig} file(s) skipped (over 10 MB).`;
+  if (rejectedNotImage) msg += ` ${rejectedNotImage} file(s) skipped (not an image).`;
+  setMangaStatus(msg.trim() || 'No valid image files were added.', accepted.length ? 'ok' : 'error');
+
+  if (accepted.length === 0) return;
+
+  const groupId = 'group_' + (groupCounter++);
+  const header = document.createElement('div');
+  header.className = 'group-header glass';
+  header.innerHTML = `
+    <div>
+      <div class="group-title">${escapeHtml(groupLabel)} — ${accepted.length} page${accepted.length > 1 ? 's' : ''}</div>
+      <div class="group-sub" id="${groupId}_status">Translating...</div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" type="button" id="${groupId}_combinedBtn" disabled>Download whole chapter</button>
+    </div>
+  `;
+  mangaGrid.appendChild(header);
+
+  const freshlyAdded = [];
+  for (const file of accepted){
+    const id = 'page_' + (pageCounter++);
+    const url = URL.createObjectURL(file);
+    const card = document.createElement('div');
+    card.className = 'manga-card glass';
+    card.innerHTML = `
+      <div class="thumb-wrap" id="${id}_thumbwrap">
+        <img src="${url}" id="${id}_img" alt="${escapeHtml(file.name)}">
+      </div>
+      <div class="meta">
+        <div class="fname">${escapeHtml(file.name)}</div>
+        <div class="card-status" id="${id}_status">Waiting</div>
+        <div class="card-actions">
+          <button class="btn btn-secondary" type="button" id="${id}_translateOne">Translate</button>
+          <button class="btn btn-secondary" type="button" id="${id}_download" disabled>Download</button>
+        </div>
+      </div>
+    `;
+    mangaGrid.appendChild(card);
+    const page = { id, file, url, imgEl: null, canvas: null, status: 'waiting', cancelled: false };
+    page.imgEl = document.getElementById(id + '_img');
+    mangaPages.push(page);
+    freshlyAdded.push(page);
+
+    document.getElementById(id + '_translateOne').addEventListener('click', () => translateOnePage(page));
+    document.getElementById(id + '_download').addEventListener('click', () => downloadOnePage(page));
+  }
+
+  translateAllBtn.disabled = false;
+  clearMangaBtn.disabled = false;
+
+  runWithConcurrency(
+    freshlyAdded,
+    (page) => translateOnePage(page),
+    MANGA_CONCURRENCY,
+    (index, result, completed, total) => {
+      const groupStatusEl = document.getElementById(groupId + '_status');
+      if (groupStatusEl) groupStatusEl.textContent = `Translating... (${completed}/${total} pages done)`;
+    }
+  ).then(async () => {
+    setMangaStatus('All pages processed ✓', 'ok');
+    downloadAllBtn.disabled = !mangaPages.some(p => p.canvas);
+    const groupStatusEl = document.getElementById(groupId + '_status');
+    const combinedBtn = document.getElementById(groupId + '_combinedBtn');
+    if (groupStatusEl) groupStatusEl.textContent = 'Building combined chapter image...';
+    try {
+      const strips = await buildCombinedStrips(freshlyAdded);
+      if (strips.length && combinedBtn){
+        combinedBtn.disabled = false;
+        combinedBtn.textContent = strips.length > 1 ? `Download whole chapter (${strips.length} parts)` : 'Download whole chapter';
+        combinedBtn.addEventListener('click', () => downloadCombinedStrips(strips, groupLabel));
+        if (groupStatusEl) groupStatusEl.textContent = `Ready — ${accepted.length} page${accepted.length > 1 ? 's' : ''}, translated as one continuous file.`;
+      } else if (groupStatusEl){
+        groupStatusEl.textContent = 'Done (no pages translated successfully to combine).';
+      }
+    } catch (err){
+      console.error(err);
+      if (groupStatusEl) groupStatusEl.textContent = 'Done — combined image could not be built: ' + err.message;
+    }
+  });
+}
+
+/* Stitches a batch's translated pages into one continuous vertical strip —
+   the way a manhwa/webtoon chapter is normally read — instead of leaving it
+   as separate page-by-page files. Splits into multiple parts only if a
+   single strip would get too tall for the browser to handle safely. */
+const MAX_STRIP_HEIGHT = 15000;
+
+async function buildCombinedStrips(pages){
+  const usable = pages.filter(p => (p.canvas || (p.imgEl && p.imgEl.naturalWidth)) && !p.cancelled);
+  if (!usable.length) return [];
+
+  const commonWidth = Math.min(1600, Math.max(...usable.map(p => (p.canvas ? p.canvas.width : p.imgEl.naturalWidth))));
+  const scaledPages = usable.map(p => {
+    const srcW = p.canvas ? p.canvas.width : p.imgEl.naturalWidth;
+    const srcH = p.canvas ? p.canvas.height : p.imgEl.naturalHeight;
+    const scaledHeight = Math.round((commonWidth / srcW) * srcH);
+    return { source: p.canvas || p.imgEl, width: commonWidth, height: scaledHeight };
+  });
+
+  const strips = [];
+  let currentPages = [];
+  let currentHeight = 0;
+  for (const sp of scaledPages){
+    if (currentHeight + sp.height > MAX_STRIP_HEIGHT && currentPages.length){
+      strips.push(currentPages);
+      currentPages = [];
+      currentHeight = 0;
+    }
+    currentPages.push(sp);
+    currentHeight += sp.height;
+  }
+  if (currentPages.length) strips.push(currentPages);
+
+  const results = [];
+  for (const group of strips){
+    const totalHeight = group.reduce((sum, sp) => sum + sp.height, 0);
+    const canvas = document.createElement('canvas');
+    canvas.width = commonWidth;
+    canvas.height = totalHeight;
+    const ctx = canvas.getContext('2d');
+    let y = 0;
+    for (const sp of group){
+      ctx.drawImage(sp.source, 0, y, sp.width, sp.height);
+      y += sp.height;
+    }
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+    results.push(blob);
+  }
+  return results;
+}
+
+function downloadCombinedStrips(blobs, groupLabel){
+  const safeName = groupLabel.replace(/[^a-z0-9-_ ]/gi, '').trim() || 'chapter';
+  blobs.forEach((blob, i) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const suffix = blobs.length > 1 ? `_part${i + 1}` : '';
+    a.href = url; a.download = `${safeName}_tamil${suffix}.png`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  });
+}
+
+async function ensureTamilFontLoaded(){
+  await document.fonts.load("700 40px 'Noto Sans Tamil'");
+  await document.fonts.ready;
+}
+
+function wrapTextToFit(ctx, text, maxWidth, maxHeight, startFontPx, fontWeight){
+  let fontPx = startFontPx;
+  const minFontPx = 10;
+  let best = null;
+  while (fontPx >= minFontPx){
+    ctx.font = `${fontWeight} ${fontPx}px 'Noto Sans Tamil'`;
+    const words = text.split(/\s+/).filter(Boolean);
+    const lines = [];
+    let line = '';
+    for (const word of words){
+      const test = line ? line + ' ' + word : word;
+      if (ctx.measureText(test).width > maxWidth && line){
+        lines.push(line);
+        line = word;
+      } else {
+        line = test;
+      }
+    }
+    if (line) lines.push(line);
+    const lineHeight = fontPx * 1.25;
+    const totalHeight = lines.length * lineHeight;
+    best = { lines, fontPx, lineHeight };
+    if (totalHeight <= maxHeight || fontPx <= minFontPx) return best;
+    fontPx -= 2;
+  }
+  return best;
+}
+
+function fileToBase64(file){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = () => reject(new Error('Could not read this image file'));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function renderTranslatedPage(page, regions){
+  await ensureTamilFontLoaded();
+  await waitForImageLoad(page.imgEl);
+
+  const naturalW = page.imgEl.naturalWidth;
+  const naturalH = page.imgEl.naturalHeight;
+  if (!naturalW || !naturalH) throw new Error('Image has no readable dimensions');
+
+  const canvas = document.createElement('canvas');
+  canvas.width = naturalW;
+  canvas.height = naturalH;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(page.imgEl, 0, 0, naturalW, naturalH);
+
+  for (const region of regions){
+    const x = (region.x / 100) * naturalW;
+    const y = (region.y / 100) * naturalH;
+    const w = (region.width / 100) * naturalW;
+    const h = (region.height / 100) * naturalH;
+    if (w <= 0 || h <= 0 || !region.tamil_text) continue;
+
+    let fillColor = '#ffffff';
+    try {
+      const sampleX = Math.max(0, Math.min(naturalW - 1, Math.round(x + 2)));
+      const sampleY = Math.max(0, Math.min(naturalH - 1, Math.round(y + 2)));
+      const edge = ctx.getImageData(sampleX, sampleY, 1, 1).data;
+      fillColor = `rgb(${edge[0]},${edge[1]},${edge[2]})`;
+    } catch (e){ /* out of bounds or tainted canvas — keep white fallback */ }
+    ctx.fillStyle = fillColor;
+    ctx.fillRect(x, y, w, h);
+
+    const padding = Math.min(w, h) * 0.08;
+    const fit = wrapTextToFit(ctx, region.tamil_text, Math.max(1, w - padding * 2), Math.max(1, h - padding * 2), Math.max(14, h * 0.22), '600');
+    if (!fit) continue;
+    const { lines, fontPx, lineHeight } = fit;
+    ctx.fillStyle = '#111111';
+    ctx.font = `600 ${fontPx}px 'Noto Sans Tamil'`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const totalTextHeight = lines.length * lineHeight;
+    let startY = y + h / 2 - totalTextHeight / 2 + lineHeight / 2;
+    for (const line of lines){
+      ctx.fillText(line, x + w / 2, startY, w - padding);
+      startY += lineHeight;
+    }
+  }
+
+  if (page.cancelled) return;
+  const thumbwrap = document.getElementById(page.id + '_thumbwrap');
+  if (!thumbwrap) return;
+  thumbwrap.innerHTML = '';
+  canvas.style.width = '100%';
+  canvas.style.display = 'block';
+  thumbwrap.appendChild(canvas);
+  page.canvas = canvas;
+}
+
+async function translateOnePage(page){
+  if (page.cancelled) return;
+  const statusEl = document.getElementById(page.id + '_status');
+  const downloadBtn = document.getElementById(page.id + '_download');
+  const thumbwrap = document.getElementById(page.id + '_thumbwrap');
+  if (!statusEl || !thumbwrap) return;
+
+  statusEl.textContent = 'Reading page...';
+  statusEl.className = 'card-status';
+
+  const overlay = document.createElement('div');
+  overlay.className = 'spinner-overlay';
+  overlay.id = page.id + '_overlay';
+  overlay.innerHTML = `<div class="spinner-ring"></div><div>Translating…</div>`;
+  thumbwrap.appendChild(overlay);
+
+  try {
+    const base64 = await fileToBase64(page.file);
+    if (page.cancelled) return;
+    const mediaType = page.file.type || 'image/jpeg';
+    const regions = await callClaudeVisionTranslate(base64, mediaType);
+    if (page.cancelled) return;
+    await renderTranslatedPage(page, regions);
+    if (page.cancelled) return;
+
+    statusEl.textContent = regions.length
+      ? `Translated (${regions.length} text region${regions.length > 1 ? 's' : ''})`
+      : 'No text found on this page';
+    statusEl.className = 'card-status';
+    if (downloadBtn) downloadBtn.disabled = false;
+    page.status = 'done';
+  } catch (err){
+    if (page.cancelled) return;
+    console.error(err);
+    statusEl.textContent = 'Error: ' + err.message;
+    statusEl.className = 'card-status error';
+    page.status = 'error';
+  } finally {
+    const ov = document.getElementById(page.id + '_overlay');
+    if (ov) ov.remove();
+  }
+}
+
+function downloadOnePage(page){
+  if (!page.canvas) return;
+  page.canvas.toBlob(blob => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const base = page.file.name.replace(/\.[^.]+$/, '');
+    a.href = url; a.download = base + '_tamil.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  }, 'image/png');
+}
+
+translateAllBtn.addEventListener('click', async () => {
+  translateAllBtn.disabled = true;
+  const pending = mangaPages.filter(p => p.status !== 'done' && !p.cancelled);
+  if (!pending.length){
+    setMangaStatus('Nothing left to retry.', 'ok');
+    translateAllBtn.disabled = false;
+    return;
+  }
+  setMangaStatus(`Translating ${pending.length} page(s) in parallel...`, '');
+  let completedCount = 0;
+  await runWithConcurrency(
+    pending,
+    (page) => translateOnePage(page),
+    MANGA_CONCURRENCY,
+    () => {
+      completedCount++;
+      setMangaStatus(`Translating pages... (${completedCount}/${pending.length} done)`, '');
+    }
+  );
+  setMangaStatus('All pages processed ✓', 'ok');
+  downloadAllBtn.disabled = !mangaPages.some(p => p.canvas);
+  translateAllBtn.disabled = false;
+});
+
+downloadAllBtn.addEventListener('click', async () => {
+  const zip = new JSZip();
+  const donePages = mangaPages.filter(p => p.canvas);
+  if (!donePages.length) return;
+  setMangaStatus('Preparing zip file...', '');
+  for (const page of donePages){
+    const blob = await new Promise(res => page.canvas.toBlob(res, 'image/png'));
+    const base = page.file.name.replace(/\.[^.]+$/, '');
+    zip.file(base + '_tamil.png', blob);
+  }
+  const content = await zip.generateAsync({ type: 'blob' });
+  const url = URL.createObjectURL(content);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'tamil_translated_pages.zip';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  setMangaStatus('Zip downloaded ✓', 'ok');
+});
+
+clearMangaBtn.addEventListener('click', () => {
+  mangaPages.forEach(p => { p.cancelled = true; URL.revokeObjectURL(p.url); });
+  mangaPages = [];
+  mangaGrid.innerHTML = '';
+  mangaInput.value = '';
+  translateAllBtn.disabled = true;
+  downloadAllBtn.disabled = true;
+  clearMangaBtn.disabled = true;
+  setMangaStatus('');
+  refreshMangaEmptyState();
+});
+
+refreshMangaEmptyState();
+</script>
+</body>
+</html>
